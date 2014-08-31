@@ -24,43 +24,21 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from nose.tools import eq_
-from pytoolbox.collections import pygal_deque
+import unittest
+from pytoolbox.filesystem import try_remove
+from pytoolbox.multimedia.ffmpeg import FFmpeg
 
 
-class TestCollections(object):
+class RaiseFFmpeg(FFmpeg):
 
-    def test_pygal_deque(self):
-        p = pygal_deque(maxlen=4)
+    def _clean_statistics(self, **statistics):
+        raise ValueError('This is the exception.')
 
-        p.append(5)
-        eq_(p.list(fill=False), [5])
-        p.append(5)
-        p.append(5)
-        eq_(p.list(fill=False), [5, None, 5])
-        p.append(5)
-        eq_(p.list(fill=False), [5, None, None, 5])
-        p.append(5)
-        eq_(p.list(fill=False), [5, None, None, 5])
-        p.append(None)
-        eq_(p.list(fill=False), [5, None, None, 5])
-        p.append(None)
-        eq_(p.list(fill=False), [5, None, None, 5])
-        p.append(5)
-        eq_(p.list(fill=False), [5, None, None, 5])
-        eq_(p.list(fill=True), [5, 5, 5, 5])
-        p.append(1)
-        eq_(p.list(fill=False), [5, None, 5, 1])
-        p.append(None)
-        eq_(p.list(fill=False), [5, 5, 1, 1])
-        p.append(None)
-        eq_(p.list(fill=False), [5, 1, None, 1])
-        eq_(p.list(fill=True), [5, 1, 1, 1])
-        p.append(None)
-        eq_(p.list(fill=False), [1, None, None, 1])
-        p.append(2)
-        p.append(3)
-        eq_(p.list(fill=False), [1, 1, 2, 3])
-        p.append(None)
-        p.append(2)
-        eq_(p.list(fill=False), [2, 3, 3, 2])
+
+class TestFFmpeg(unittest.TestCase):
+
+    def test_kill_process_handle_missing(self):
+        encoder = RaiseFFmpeg()
+        with self.assertRaises(ValueError):
+            list(encoder.encode('small.mp4', 'ff_output.mp4', '-c:a copy -c:v copy'))
+        self.assertTrue(try_remove('ff_output.mp4'))

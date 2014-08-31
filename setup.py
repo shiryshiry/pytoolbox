@@ -27,7 +27,9 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import sys
 from codecs import open
+from os.path import dirname, join
 from setuptools import setup, find_packages
+from subprocess import check_output
 
 # https://pypi.python.org/pypi?%3Aaction=list_classifiers
 
@@ -70,6 +72,7 @@ install_requires = [
     'pygal',
     'pymongo',
     'pytz',
+    'requests',
     'six',
 ]
 
@@ -119,9 +122,15 @@ if len(sys.argv) > 1 and sys.argv[1] in ('develop', 'install', 'test'):
             install_requires += extras_require[extra]
     sys.argv = [arg for arg in old_args if not '--extra' in arg]
 
+    if sys.argv[1] == 'test':
+        print('Download the test media assets')
+        from pytoolbox.network.http import download_ext
+        download_ext('http://techslides.com/demos/sample-videos/small.mp4', join(dirname(__file__), 'small.mp4'),
+                     force=False)
+
 setup(name='pytoolbox',
       version='9.4.2',
-      packages=find_packages(exclude=['tests']),
+      packages=find_packages(),
       description=description,
       long_description=open('README.rst', 'r', encoding='utf-8').read(),
       author='David Fischer',
@@ -132,8 +141,8 @@ setup(name='pytoolbox',
       keywords=keywords,
       extras_require=extras_require,
       install_requires=install_requires,
-      tests_require=['coverage', 'mock', 'nose'],
+      tests_require=['coverage', 'mock', 'nose', 'nose-exclude'],
       # Thanks to https://github.com/graingert/django-browserid/commit/46c763f11f76b2f3ba365b164196794a37494f44
-      test_suite='tests.pytoolbox_runtests.main',
+      test_suite='nose.collector',
       use_2to3=PY3,
       use_2to3_exclude_fixers=['lib2to3.fixes.fix_import'])

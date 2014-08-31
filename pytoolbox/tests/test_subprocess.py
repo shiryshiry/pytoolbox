@@ -24,14 +24,13 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import six
-from nose.tools import eq_, assert_raises
+import six, unittest
 from pytoolbox.unittest import Mock
 from pytoolbox.subprocess import cmd, screen_launch, screen_list, screen_kill
 from pytoolbox.validation import validate_list
 
 
-class TestSubprocess(object):
+class TestSubprocess(unittest.TestCase):
 
     def main(self):
         self.test_screen()
@@ -39,19 +38,19 @@ class TestSubprocess(object):
     def test_cmd(self):
         log = Mock()
         cmd(['echo', 'it seem to work'], log=log)
-        eq_(cmd('cat missing_file', fail=False, log=log)['returncode'], 1)
+        self.assertEqual(cmd('cat missing_file', fail=False, log=log)['returncode'], 1)
         validate_list(log.call_args_list, [
             r"call\(u*'Execute echo it seem to work'\)",
             r"call\(u*'Execute cat missing_file'\)",
             r"call\(u*'Attempt 1 out of 1: Failed'\)"
         ])
-        assert(cmd('my.funny.missing.script.sh', fail=False)['stderr'] != '')
+        self.assertNotEqual(cmd('my.funny.missing.script.sh', fail=False)['stderr'], '')
         result = cmd('cat {0}'.format(__file__))
         # There are at least 30 lines in this source file !
-        assert(len(result['stdout'].splitlines()) > 30)
+        self.assertGreater(len(result['stdout'].splitlines()), 30)
 
     def test_cmd_missing_binary(self):
-        eq_(cmd('hfuejnvwqkdivengz', fail=False)['returncode'], 2)
+        self.assertEqual(cmd('hfuejnvwqkdivengz', fail=False)['returncode'], 2)
 
     def test_retry_first_try(self):
         log = Mock()
@@ -62,7 +61,8 @@ class TestSubprocess(object):
 
     def test_retry_missing_binary_no_retry(self):
         log = Mock()
-        assert_raises(OSError, cmd, 'hfuejnvwqkdivengz', log=log, tries=5)
+        with self.assertRaises(OSError):
+            cmd('hfuejnvwqkdivengz', log=log, tries=5)
         validate_list(log.call_args_list, [
             r"call\(u*'Execute hfuejnvwqkdivengz'\)",
             r"call\(FileNotFoundError.*\)" if six.PY3 else r"call\(OSError.*\)"
@@ -85,14 +85,16 @@ class TestSubprocess(object):
             # Launch some screens
             screen_kill('my_1st_screen', fail=False)
             screen_kill('my_2nd_screen', fail=False)
-            eq_(len(screen_launch('my_1st_screen', 'top', fail=False)['stderr']), 0)
-            eq_(len(screen_launch('my_2nd_screen', 'top', fail=False)['stderr']), 0)
-            eq_(len(screen_launch('my_2nd_screen', 'top', fail=False)['stderr']), 0)
+            self.assertEqual(len(screen_launch('my_1st_screen', 'top', fail=False)['stderr']), 0)
+            self.assertEqual(len(screen_launch('my_2nd_screen', 'top', fail=False)['stderr']), 0)
+            self.assertEqual(len(screen_launch('my_2nd_screen', 'top', fail=False)['stderr']), 0)
             # List the launched screen sessions
             screens = screen_list(name='my_1st_screen')
-            assert(len(screens) >= 1 and screens[0].endswith('my_1st_screen'))
+            self.assertGreater(len(screens), 0)
+            self.assertTrue(screens[0].endswith('my_1st_screen'))
             screens = screen_list(name='my_2nd_screen')
-            assert(len(screens) >= 1 and screens[0].endswith('my_2nd_screen'))
+            self.assertGreater(len(screens), 0)
+            self.assertTrue(screens[0].endswith('my_2nd_screen'))
         finally:
             # Cleanup
             log = Mock()

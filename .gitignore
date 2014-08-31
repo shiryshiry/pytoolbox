@@ -2,6 +2,8 @@ build/
 dist/
 pytoolbox3/
 .coverage
+.tox/
 *.pyc
 *.egg/
 *.egg-info/
+small.mp4

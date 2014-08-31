@@ -24,17 +24,21 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import argparse
-from nose.tools import assert_raises, eq_
-from pytoolbox.argparse import is_dir, is_file
+import unittest
+from pytoolbox.validation import validate_list
 
 
-class TestArgparse(object):
+class TestValidation(unittest.TestCase):
 
-    def test_is_dir(self):
-        eq_(is_dir('/home'), '/home')
-        assert_raises(argparse.ArgumentTypeError, is_dir, 'sjdsajkd')
+    def test_validate_list(self):
+        regexes = [r'\d+', r"call\(\[u*'my_var', recursive=(True|False)\]\)"]
+        validate_list([10, "call(['my_var', recursive=False])"], regexes)
 
-    def test_is_file(self):
-        eq_(is_file('/etc/hosts'), '/etc/hosts')
-        assert_raises(argparse.ArgumentTypeError, is_file, 'wdjiwdji')
+    def test_validate_list_fail_size(self):
+        with self.assertRaises(IndexError):
+            validate_list([1, 2], [1, 2, 3])
+
+    def test_validate_list_fail_value(self):
+        with self.assertRaises(ValueError):
+            regexes = [r'\d+', r"call\(\[u*'my_var', recursive=(True|False)\]\)"]
+            validate_list([10, "call(['my_var', recursive='error'])"], regexes)

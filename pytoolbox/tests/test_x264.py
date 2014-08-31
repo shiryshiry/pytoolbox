@@ -24,21 +24,15 @@
 
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from nose.tools import eq_, assert_raises as ar_
-from pytoolbox.filesystem import try_remove
-from pytoolbox.multimedia.ffmpeg import FFmpeg
+import unittest
+from pytoolbox.multimedia.x264 import ENCODING_REGEX
 
 
-class RaiseFFmpeg(FFmpeg):
+class TestX264(unittest.TestCase):
 
-    def _clean_statistics(self, **statistics):
-        raise ValueError('This is the exception.')
-
-
-class TestFFmpeg(object):
-
-    def test_kill_process_handle_missing(self):
-        encoder = RaiseFFmpeg()
-        with ar_(ValueError):
-            list(encoder.encode('small.mp4', 'ff_output.mp4', '-c:a copy -c:v copy'))
-        eq_(try_remove('ff_output.mp4'), True)
+    def test_encoding_regex(self):
+        match = ENCODING_REGEX.match('[79.5%] 3276/4123 frames, 284.69 fps, 2111.44 kb/s, eta 0:00:02')
+        self.assertDictEqual(match.groupdict(), {
+            'percent': '79.5', 'frame': '3276', 'frame_total': '4123', 'fps': '284.69', 'bitrate': '2111.44 kb/s',
+            'eta': '0:00:02'
+        })
